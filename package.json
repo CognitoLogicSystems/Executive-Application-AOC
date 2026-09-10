@@ -1,0 +1,20 @@
+{
+  "name": "executive-application-aoc",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CognitoLogic executive application intake form",
+  "type": "module",
+  "scripts": {
+    "lint": "eslint .",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.34.0",
+    "eslint": "^9.34.0",
+    "globals": "^16.3.0",
+    "prettier": "^3.6.2",
+    "vitest": "^3.2.4"
+  }
+}

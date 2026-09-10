@@ -1,0 +1,79 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function hasAllowedKeys(data, allowedKeys) {
+      return data.keys().hasOnly(allowedKeys);
+    }
+
+    function isValidApplication(data, userId) {
+      return hasAllowedKeys(data, [
+          'email',
+          'email_hash',
+          'labor_cost_estimate',
+          'labor_cost_hourly',
+          'friction_point_description',
+          'submission_timestamp',
+          'user_id',
+          'consent_accepted',
+          'consent_timestamp'
+        ])
+        && data.user_id == userId
+        && data.user_id == request.auth.uid
+        && data.email is string
+        && data.email.size() > 3
+        && data.email.size() <= 254
+        && data.email.matches('^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$')
+        && data.email_hash is string
+        && data.email_hash.size() == 64
+        && data.email_hash.matches('^[a-f0-9]{64}$')
+        && data.labor_cost_estimate is string
+        && data.labor_cost_estimate.size() >= 4
+        && data.labor_cost_estimate.size() <= 24
+        && data.labor_cost_hourly is number
+        && data.labor_cost_hourly > 0
+        && data.labor_cost_hourly <= 1000000
+        && data.friction_point_description is string
+        && data.friction_point_description.size() >= 10
+        && data.friction_point_description.size() <= 1000
+        && data.submission_timestamp is string
+        && data.submission_timestamp.size() >= 20
+        && data.submission_timestamp.size() <= 40
+        && data.consent_accepted == true
+        && data.consent_timestamp is string
+        && data.consent_timestamp.size() >= 20
+        && data.consent_timestamp.size() <= 40;
+    }
+
+    function isValidApplicantIndex(data, applicantKey) {
+      return hasAllowedKeys(data, [
+          'email_hash',
+          'user_id',
+          'submission_timestamp'
+        ])
+        && data.email_hash == applicantKey
+        && data.email_hash is string
+        && data.email_hash.size() == 64
+        && data.email_hash.matches('^[a-f0-9]{64}$')
+        && data.user_id == request.auth.uid
+        && data.submission_timestamp is string
+        && data.submission_timestamp.size() >= 20
+        && data.submission_timestamp.size() <= 40;
+    }
+
+    match /artifacts/{appId}/users/{userId}/applications/protocol_application {
+      allow create: if isSignedIn() && isValidApplication(request.resource.data, userId);
+      allow get: if isSignedIn() && request.auth.uid == userId;
+      allow list, update, delete: if false;
+    }
+
+    match /artifacts/{appId}/applicants/{applicantKey} {
+      allow create: if isSignedIn() && isValidApplicantIndex(request.resource.data, applicantKey);
+      allow get: if isSignedIn() && resource.data.user_id == request.auth.uid;
+      allow list, update, delete: if false;
+    }
+  }
+}
