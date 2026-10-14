@@ -5,15 +5,74 @@ export const EMAIL_MAX_LENGTH = 254;
 export const FRICTION_POINT_MIN_LENGTH = 10;
 export const FRICTION_POINT_MAX_LENGTH = 1000;
 
+function getTagName(tagContent) {
+  const match = tagContent.trimStart().match(/^\/?\s*([a-zA-Z0-9:-]+)/);
+  return match ? match[1].toLowerCase() : "";
+}
+
+function findScriptStyleCloseTag(input, startIndex, tagName) {
+  const lower = input.toLowerCase();
+  const closeStartToken = `</${tagName}`;
+  let cursor = startIndex;
+
+  while (cursor < input.length) {
+    const closeStart = lower.indexOf(closeStartToken, cursor);
+    if (closeStart === -1) {
+      return -1;
+    }
+
+    const closeEnd = input.indexOf(">", closeStart + closeStartToken.length);
+    if (closeEnd !== -1) {
+      return closeEnd + 1;
+    }
+
+    cursor = closeStart + closeStartToken.length;
+  }
+
+  return -1;
+}
+
+function stripHtmlAndScriptBlocks(input) {
+  let result = "";
+  let cursor = 0;
+
+  while (cursor < input.length) {
+    const openTagStart = input.indexOf("<", cursor);
+    if (openTagStart === -1) {
+      result += input.slice(cursor);
+      break;
+    }
+
+    result += input.slice(cursor, openTagStart);
+
+    const openTagEnd = input.indexOf(">", openTagStart + 1);
+    if (openTagEnd === -1) {
+      break;
+    }
+
+    const tagContent = input.slice(openTagStart + 1, openTagEnd);
+    const tagName = getTagName(tagContent);
+    const isClosingTag = tagContent.trimStart().startsWith("/");
+
+    if (!isClosingTag && (tagName === "script" || tagName === "style")) {
+      const closeTagEnd = findScriptStyleCloseTag(input, openTagEnd + 1, tagName);
+      cursor = closeTagEnd === -1 ? openTagEnd + 1 : closeTagEnd;
+    } else {
+      cursor = openTagEnd + 1;
+    }
+
+    result += " ";
+  }
+
+  return result;
+}
+
 export function normalizeEmail(email) {
   return String(email ?? "").trim().toLowerCase();
 }
 
 export function sanitizeText(input, maxLength = FRICTION_POINT_MAX_LENGTH) {
-  const withoutHtml = String(input ?? "")
-    .replace(/<script[\s\S]*?<\/script\s*>/gi, " ")
-    .replace(/<style[\s\S]*?<\/style\s*>/gi, " ")
-    .replace(/<[^>]+>/g, " ");
+  const withoutHtml = stripHtmlAndScriptBlocks(String(input ?? ""));
 
   const cleaned = withoutHtml
     .replace(/[\p{Cc}]/gu, " ")

@@ -18,6 +18,7 @@ describe("validation", () => {
   it("sanitizes text, strips html/script tags, and removes control characters", () => {
     expect(sanitizeText("  Hello\n\tworld\u0000 ")).toBe("Hello world");
     expect(sanitizeText("<script>alert('x')</script><b>Hello</b> <i>world</i>")).toBe("Hello world");
+    expect(sanitizeText("<script>alert('x')</script \n bar>Safe text")).toBe("Safe text");
   });
 
   it("accepts a valid submission", () => {
