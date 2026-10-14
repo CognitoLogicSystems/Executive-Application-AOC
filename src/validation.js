@@ -11,8 +11,8 @@ export function normalizeEmail(email) {
 
 export function sanitizeText(input, maxLength = FRICTION_POINT_MAX_LENGTH) {
   const withoutHtml = String(input ?? "")
-    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ")
-    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script\s*>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style\s*>/gi, " ")
     .replace(/<[^>]+>/g, " ");
 
   const cleaned = withoutHtml
