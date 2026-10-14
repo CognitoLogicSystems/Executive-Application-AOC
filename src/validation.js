@@ -10,7 +10,12 @@ export function normalizeEmail(email) {
 }
 
 export function sanitizeText(input, maxLength = FRICTION_POINT_MAX_LENGTH) {
-  const cleaned = String(input ?? "")
+  const withoutHtml = String(input ?? "")
+    .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, " ")
+    .replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ");
+
+  const cleaned = withoutHtml
     .replace(/[\p{Cc}]/gu, " ")
     .replace(/\s+/g, " ")
     .trim();

@@ -15,8 +15,9 @@ describe("validation", () => {
     expect(parseLaborCost("$65/hr")).toEqual({ amount: 65, formatted: "$65.00/hr" });
   });
 
-  it("sanitizes text and strips control characters", () => {
+  it("sanitizes text, strips html/script tags, and removes control characters", () => {
     expect(sanitizeText("  Hello\n\tworld\u0000 ")).toBe("Hello world");
+    expect(sanitizeText("<script>alert('x')</script><b>Hello</b> <i>world</i>")).toBe("Hello world");
   });
 
   it("accepts a valid submission", () => {
